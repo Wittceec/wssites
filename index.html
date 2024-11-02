@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WSSites</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            color: #007bff;
+            margin-bottom: 20px;
+        }
+
+        #search-container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+        }
+
+        input[type="text"] {
+            width: 80%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #results {
+            margin-top: 20px;
+            width: 100%;
+            max-width: 600px;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f0f0f0;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+</head>
+<body>
+    <h1>WSSites</h1>
+    <div id="search-container">
+        <label for="search-input">Enter Site Information:</label><br>
+        <input type="text" id="search-input" placeholder="Type your search term here" onkeypress="handleKeyPress(event)">
+        <button onclick="searchCSV()"><i class="fas fa-search"></i> Search</button>
+    </div>
+
+    <div id="results"></div>
+
+    <script>
+        // URL of the CSV file hosted on GitHub
+        const csvUrl = "https://raw.githubusercontent.com/Wittceec/wittceec.github.io/main/locations.csv";
+
+        // Function to handle Enter key press
+        function handleKeyPress(event) {
+            if (event.key === "Enter") {
+                searchCSV();
+            }
+        }
+
+        // Function to fetch and search the CSV file
+        function searchCSV() {
+            const searchTerm = document.getElementById("search-input").value.trim().toLowerCase();
+            if (!searchTerm) {
+                alert("Please enter a search term.");
+                return;
+            }
+
+            fetch(csvUrl)
+                .then(response => response.text())
+                .then(csvText => {
+                    // Parse the CSV using PapaParse
+                    Papa.parse(csvText, {
+                        header: true, // Set to true if the CSV has headers
+                        complete: function(results) {
+                            const data = results.data;
+                            displayResults(data, searchTerm);
+                        }
+                    });
+                })
+                .catch(error => console.error("Error fetching the CSV file:", error));
+        }
+
+        // Function to display the search results
+        function displayResults(data, searchTerm) {
+            const resultsDiv = document.getElementById("results");
+            resultsDiv.innerHTML = ""; // Clear previous results
+
+            const filteredData = data.filter(row => {
+                return Object.values(row).some(value =>
+                    value && value.toString().toLowerCase().includes(searchTerm)
+                );
+            });
+
+            if (filteredData.length === 0) {
+                resultsDiv.textContent = "No results found.";
+            } else {
+                const table = document.createElement("table");
+                const headerRow = document.createElement("tr");
+                
+                // Create table headers
+                Object.keys(filteredData[0]).forEach(key => {
+                    const th = document.createElement("th");
+                    th.textContent = key;
+                    headerRow.appendChild(th);
+                });
+                table.appendChild(headerRow);
+
+                // Create table rows for each result
+                filteredData.forEach(row => {
+                    const tr = document.createElement("tr");
+                    Object.values(row).forEach(value => {
+                        const td = document.createElement("td");
+                        td.textContent = value || "";
+                        tr.appendChild(td);
+                    });
+                    table.appendChild(tr);
+                });
+
+                resultsDiv.appendChild(table);
+            }
+        }
+    </script>
+</body>
+</html>
